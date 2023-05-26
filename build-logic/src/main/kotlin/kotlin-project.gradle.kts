@@ -15,7 +15,6 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
-    implementation("app.softwork:kotlinx-uuid-core:0.0.17")
 
     val coroutineVersion = "1.6.4"
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutineVersion")

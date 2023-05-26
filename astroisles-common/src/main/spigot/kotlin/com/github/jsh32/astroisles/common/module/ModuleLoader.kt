@@ -1,15 +1,10 @@
 package com.github.jsh32.astroisles.common.module
 
-import com.google.inject.AbstractModule
 import com.google.inject.Guice
-import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import kotlin.reflect.KClass
 
-class ModuleLoader<T : JavaPlugin>(
-    plugin: T,
-    vararg guiceModules: com.google.inject.Module
-) {
+class ModuleLoader(vararg guiceModules: com.google.inject.Module) {
     private var postInitHook: ((Module) -> Unit)? = null
 
     /**
@@ -19,17 +14,7 @@ class ModuleLoader<T : JavaPlugin>(
         postInitHook = hook
     }
 
-    /**
-     * Basic injector for the plugin.
-     */
-    private class PluginModule<T : JavaPlugin>(var plugin: T) : AbstractModule() {
-        override fun configure() {
-            bind(JavaPlugin::class.java).toInstance(plugin)
-            bind(plugin.javaClass).toInstance(plugin)
-        }
-    }
-
-    private val injector = Guice.createInjector(PluginModule(plugin), *guiceModules)
+    private val injector = Guice.createInjector(*guiceModules)
     private val registry = mutableMapOf<Class<*>, Module>()
 
     /**

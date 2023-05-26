@@ -3,7 +3,14 @@ plugins {
     id("grpc-definitions")
 }
 
+ext.set("spigot", "true")
+
 dependencies {
+    implementation(project(":astroisles-common")) {
+        capabilities {
+            requireCapability("com.github.jsh32.astroisles.common:spigot")
+        }
+    }
     implementation(project(":astroisles-common"))
 }
 

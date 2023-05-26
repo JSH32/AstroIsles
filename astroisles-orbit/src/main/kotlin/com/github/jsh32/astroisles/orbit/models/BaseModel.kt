@@ -1,4 +1,4 @@
-package models
+package com.github.jsh32.astroisles.orbit.models
 
 import io.ebean.Model
 import io.ebean.annotation.WhenCreated

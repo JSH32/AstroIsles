@@ -7,20 +7,53 @@ repositories {
     maven("https://jitpack.io")
 }
 
+sourceSets {
+    create("spigot") {
+        kotlin {
+            compileClasspath += sourceSets["main"].output
+            runtimeClasspath += sourceSets["main"].output
+            this.srcDir("src/main/spigot/kotlin")
+        }
+    }
+}
+
+java {
+    registerFeature("spigot") {
+        usingSourceSet(sourceSets["spigot"])
+        capability("com.github.jsh32.astroisles.common", "spigot", "1.0")
+    }
+}
+
 dependencies {
-    api("com.google.inject:guice:7.0.0")
+    // Configurate
     api("org.spongepowered:configurate-hocon:4.1.2")
-    api("org.spongepowered:configurate-yaml:4.1.2")
-    api("net.kyori:adventure-api:4.13.1")
-    api("net.kyori:adventure-platform-bukkit:4.3.0")
 
-    api("cloud.commandframework:cloud-paper:1.8.3")
-    api("cloud.commandframework:cloud-minecraft-extras:1.8.3")
-    api("cloud.commandframework:cloud-annotations:1.8.3")
-    api("cloud.commandframework:cloud-kotlin-coroutines:1.8.3")
-    api("cloud.commandframework:cloud-kotlin-coroutines-annotations:1.8.3")
-    api("me.lucko:commodore:2.2")
-    annotationProcessor("cloud.commandframework:cloud-annotations:1.7.1")
+    // Redis
+    api("redis.clients:jedis:4.3.0")
 
-    compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
+    val spigotApi by configurations
+    val spigotAnnotationProcessor by configurations
+    val spigotCompileOnly by configurations
+
+    spigotApi("com.google.inject:guice:7.0.0")
+
+    // Adventure
+    spigotApi("net.kyori:adventure-api:4.13.1")
+    spigotApi("net.kyori:adventure-platform-bukkit:4.3.0")
+
+    // Cloud command framework
+    spigotApi("cloud.commandframework:cloud-paper:1.8.3")
+    spigotApi("cloud.commandframework:cloud-minecraft-extras:1.8.3")
+    spigotApi("cloud.commandframework:cloud-annotations:1.8.3")
+    spigotApi("cloud.commandframework:cloud-kotlin-coroutines:1.8.3")
+    spigotApi("cloud.commandframework:cloud-kotlin-coroutines-annotations:1.8.3")
+    spigotApi("me.lucko:commodore:2.2")
+    spigotAnnotationProcessor("cloud.commandframework:cloud-annotations:1.7.1")
+
+    // Paper
+    spigotCompileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
+
+    // Velocity
+//    compileOnly("com.velocitypowered:velocity-api:3.1.1")
+//    annotationProcessor("com.velocitypowered:velocity-api:3.1.1")
 }

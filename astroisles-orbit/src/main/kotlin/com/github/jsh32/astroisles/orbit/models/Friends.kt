@@ -1,9 +1,8 @@
-package models
+package com.github.jsh32.astroisles.orbit.models
 
-import io.ebean.DB
+import com.github.jsh32.astroisles.orbit.models.query.QFriends
 import io.ebean.annotation.DbComment
 import io.ebean.annotation.Index
-import models.query.QFriends
 import java.util.UUID
 import javax.persistence.Entity
 
@@ -12,13 +11,13 @@ import javax.persistence.Entity
  */
 @Entity
 @Index(
-    unique = true, columnNames = ["from", "to"]
+    unique = true, columnNames = ["from_user", "to_user"]
 )
 class Friends(
     @DbComment("User who requested to be friends.")
-    val from: UUID,
-    @DbComment("User where request was sent")
-    val to: UUID
+    val fromUser: UUID,
+    @DbComment("User where request was sent.")
+    val toUser: UUID
 ) : BaseModel() {
     companion object {
         /**
@@ -26,12 +25,12 @@ class Friends(
          */
         fun areFriends(user1: UUID, user2: UUID): Boolean {
             val count = QFriends().where()
-                .from.eq(user1)
-                .to.eq(user2)
+                .fromUser.eq(user1)
+                .toUser.eq(user2)
                 .or()
-                    .from.eq(user2)
+                    .fromUser.eq(user2)
                     .and()
-                        .to.eq(user1)
+                        .toUser.eq(user1)
                     .endAnd()
                 .endOr()
                 .findCount()

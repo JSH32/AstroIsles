@@ -1,4 +1,4 @@
-package com.github.jsh32.astroisles.common.module
+package com.github.jsh32.astroisles.common
 
 import cloud.commandframework.annotations.AnnotationParser
 import cloud.commandframework.arguments.parser.ParserParameters

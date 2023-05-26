@@ -1,4 +1,5 @@
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 message Player {
   // Player UUID.
@@ -11,6 +12,8 @@ message Player {
   required google.protobuf.Timestamp first_join = 4;
   // Last logout date.
   optional google.protobuf.Timestamp last_logout = 5;
+  // Current server location.
+  optional string server_id = 6;
 }
 
 message CreatePlayerRequest {
@@ -21,29 +24,31 @@ message CreatePlayerRequest {
 }
 
 message GetPlayerRequest {
-  // Does the player have to be online.
-  required bool online = 1;
-
   // Query by either name or uuid.
   oneof query {
-    string name = 2;
-    string uuid = 3;
+    string name = 1;
+    string uuid = 2;
   }
 }
 
-message GetPlayerResponse {
-  enum Status {
-    Success = 0;
-    PlayerOffline = 1;
-    PlayerNotFound = 2;
-  }
+message PlayerJoinRequest {
+  // Player UUID.
+  required string uuid = 1;
+  // Server which the player joined.
+  required string server_id = 2;
+}
 
-  required Status status = 1;
-  // Player returned from query, this is only present when status is 0.
-  optional Player player = 2;
+message PlayerQuitRequest {
+  // Player UUID.
+  required string uuid = 1;
 }
 
 service PlayerService {
+  // Should be called on first join of the player to populate their data in the DB.
   rpc CreatePlayer (CreatePlayerRequest) returns (Player) {}
-  rpc GetPlayerData (GetPlayerRequest) returns (GetPlayerResponse) {}
+  rpc GetPlayerData (GetPlayerRequest) returns (Player) {}
+  // Called when player joins the server, this should be sent every time the player changes servers.
+  rpc PlayerJoin (PlayerJoinRequest) returns (google.protobuf.Empty) {}
+  // Called when player leaves the server entirely.
+  rpc PlayerQuit (PlayerQuitRequest) returns (google.protobuf.Empty) {}
 }

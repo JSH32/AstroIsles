@@ -11,5 +11,6 @@ dependencyResolutionManagement {
 include (
     "astroisles-common",
     "astroisles-core",
-    "astroisles-orbit"
+    "astroisles-orbit",
+    "astroisles-proxy"
 )
