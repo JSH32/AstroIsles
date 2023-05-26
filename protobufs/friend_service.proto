@@ -1,0 +1,24 @@
+// The greeting service definition.
+service FriendService {
+  // Sends a greeting
+  rpc AddFriend (FriendRequest) returns (FriendRequestReply) {}
+}
+
+// A friend request.
+message FriendRequest {
+  // User who sent the request.
+  required string senderUuid = 1;
+  // String which was sent in the friend request.
+  // This is not a UUID since the offline UUID can't be easily resolved.
+  required string receiver = 2;
+}
+
+message FriendRequestReply {
+  enum Status {
+    Requested = 0;
+    AlreadyFriends = 1;
+  }
+
+  required Status status = 1;
+}
+

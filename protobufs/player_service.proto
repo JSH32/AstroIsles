@@ -1,0 +1,49 @@
+import "google/protobuf/timestamp.proto";
+
+message Player {
+  // Player UUID.
+  required string uuid = 1;
+  // Player name.
+  required string name = 2;
+  // Is the player currently online.
+  required bool online = 3;
+  // First join date of player.
+  required google.protobuf.Timestamp first_join = 4;
+  // Last logout date.
+  optional google.protobuf.Timestamp last_logout = 5;
+}
+
+message CreatePlayerRequest {
+  // Player UUID.
+  required string uuid = 1;
+  // Player name.
+  required string name = 2;
+}
+
+message GetPlayerRequest {
+  // Does the player have to be online.
+  required bool online = 1;
+
+  // Query by either name or uuid.
+  oneof query {
+    string name = 2;
+    string uuid = 3;
+  }
+}
+
+message GetPlayerResponse {
+  enum Status {
+    Success = 0;
+    PlayerOffline = 1;
+    PlayerNotFound = 2;
+  }
+
+  required Status status = 1;
+  // Player returned from query, this is only present when status is 0.
+  optional Player player = 2;
+}
+
+service PlayerService {
+  rpc CreatePlayer (CreatePlayerRequest) returns (Player) {}
+  rpc GetPlayerData (GetPlayerRequest) returns (GetPlayerResponse) {}
+}
