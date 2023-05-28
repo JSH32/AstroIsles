@@ -1,5 +1,6 @@
 package com.github.jsh32.astroisles.core.modules.player
 
+import PlayerServiceGrpcKt
 import com.github.jsh32.astroisles.common.redis.ChannelListener
 import com.github.jsh32.astroisles.common.redis.RedisMessages
 import com.google.protobuf.Timestamp
@@ -21,8 +22,12 @@ class JoinListener(
     private val plugin: JavaPlugin,
     private val config: PlayerConfig,
     private val playerService: PlayerServiceGrpcKt.PlayerServiceCoroutineStub
-) : ChannelListener<RedisMessages.PlayerJoin>() {
-    override fun onMessage(message: RedisMessages.PlayerJoin) {
+) : ChannelListener(RedisMessages.PlayerJoin::class) {
+    init {
+        handle<RedisMessages.PlayerJoin> { playerHandle(it) }
+    }
+
+    private fun playerHandle(message: RedisMessages.PlayerJoin) {
         val player = plugin.server.getPlayer(UUID.fromString(message.playerId))
         if (player != null && message.initialJoin) {
             if (message.firstJoin) {

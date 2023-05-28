@@ -1,6 +1,7 @@
 package com.github.jsh32.astroisles.orbit.services
 
 import FriendServiceGrpcKt
+import FriendServiceOuterClass
 import friendRequestReply
 
 class FriendService : FriendServiceGrpcKt.FriendServiceCoroutineImplBase() {

@@ -1,8 +1,5 @@
 package com.github.jsh32.astroisles.common.redis
 
-import com.google.gson.Gson
-import java.lang.reflect.ParameterizedType
-
 /**
  * Redis databases used within AstroIsles.
  */

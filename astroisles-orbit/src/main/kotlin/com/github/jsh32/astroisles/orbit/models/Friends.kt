@@ -3,7 +3,7 @@ package com.github.jsh32.astroisles.orbit.models
 import com.github.jsh32.astroisles.orbit.models.query.QFriends
 import io.ebean.annotation.DbComment
 import io.ebean.annotation.Index
-import java.util.UUID
+import java.util.*
 import javax.persistence.Entity
 
 /**

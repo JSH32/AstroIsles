@@ -3,61 +3,89 @@ package com.github.jsh32.astroisles.common.redis
 import com.google.gson.Gson
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPubSub
-import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
+import kotlin.reflect.KClass
 
 /**
- * A utility wrapper around a jedis subscriber thread.
+ * A utility for redis pubsub.
+ * This class provides a simple wrapper to manage subscriptions and callbacks for Redis channels.
  */
 class JedisListener(private val pool: JedisPool) {
-    private val listeners = mutableMapOf<String, MutableList<ChannelListener<*>>>()
     private var thread: JedisThread? = null
+    private val listeners = mutableListOf<ChannelListener>()
     private val listener = MessageListener(listeners)
     // Should the thread be started.
-    // This exists because a subscription cannot exist with no channels so we should turn on the thread when first subscribed.
+    // This exists because a subscription cannot exist with no channels, so we should turn on the thread when first subscribed.
     private var shouldBeStarted = false
 
+    /**
+     * A thread that handles subscribing to Redis channels with a [MessageListener].
+     */
     private class JedisThread(
         val pool: JedisPool,
         val messageListener: MessageListener,
         val channels: List<String>
     ) : Thread() {
         override fun run() {
-            pool.resource.subscribe(messageListener, *channels.toTypedArray())
-        }
-    }
-
-    private class MessageListener(val listeners: Map<String, List<ChannelListener<*>>>) : JedisPubSub() {
-        override fun onMessage(channel: String?, message: String?) {
-            listeners[channel]?.let {
-                for (listener in it) { listener.onMessage(message!!) }
+            pool.resource.use {
+                it.subscribe(messageListener, *channels.toTypedArray())
             }
         }
     }
 
-    fun <T : ChannelListener<*>> addListener(listener: T) {
-        val list = listeners[listener.channel]
-        if (list == null) {
-            listeners[listener.channel] = mutableListOf(listener)
-            // A new channel has been added. We need to restart the listener.
-            if (this.listener.isSubscribed)
-                this.listener.unsubscribe()
-            if (shouldBeStarted) start()
+    /**
+     * [MessageListener] is passed to Jedis and manages incoming messages.
+     * @property listeners [ChannelListener]'s to dispatch events to.
+     */
+    private class MessageListener(val listeners: List<ChannelListener>) : JedisPubSub() {
+        override fun onMessage(channel: String, message: String) {
+            listeners
+                .filter { it.channels.contains(channel) }
+                .forEach { it.onMessage(channel, message) }
+        }
+    }
+
+    /**
+     * Adds a new [ChannelListener] and subscribes to its channels.
+     * @param listener [ChannelListener] to add.
+     * @throws IllegalArgumentException if the listener is already present.
+     */
+    fun addListener(listener: ChannelListener) {
+        if (listeners.find { listener === it } != null) {
+            throw IllegalArgumentException("Listener is already present.")
         } else {
-            if (list.contains(listener)) {
-                throw IllegalArgumentException("Listener is already present.")
-            } else {
-                list.add(listener)
-                if (shouldBeStarted) start()
+            val channels = listeners.map { it.channels }.flatten().toSet()
+            val channelsNotAdded = listener.channels.all { channels.contains(it) }
+            listeners.add(listener)
+            if (!channelsNotAdded) {
+                // A new channel has been added. We need to restart the listener.
+                if (this.listener.isSubscribed)
+                    this.listener.unsubscribe()
             }
+
+            // Start if not started already.
+            if (shouldBeStarted && !isStarted()) start()
         }
     }
 
+    /**
+     * Check if the thread/subscriber is started and alive.
+     */
+    private fun isStarted() = thread != null && thread!!.isAlive
+
+    /**
+     * Starts the subscriber thread that manages the subscriptions for the listeners.
+     * NOTE: This doesn't start immediately if there are no added listeners since at least one subscription is needed.
+     * It will flag the thread for starting, and it will be started when the first listener is added.
+     *
+     * @throws IllegalStateException if the pubsub listener is already started.
+     */
     fun start() {
-        if (thread == null || !thread!!.isAlive) {
+        if (!isStarted() || shouldBeStarted) {
             shouldBeStarted = true
-            val channels = listeners.keys.toList()
-            if (channels.isNotEmpty()) {
-                thread = JedisThread(pool, listener, listeners.keys.toList())
+            if (listeners.isNotEmpty()) {
+                val channels = listeners.flatMap { it.channels }.toSet().toList()
+                thread = JedisThread(pool, listener, channels)
                 thread!!.start()
             }
         } else {
@@ -68,9 +96,10 @@ class JedisListener(private val pool: JedisPool) {
     /**
      * Safely stop the subscriptions on this listener.
      * This will stop the pubsub thread.
+     * @throws IllegalStateException if the pubsub listener is already stopped.
      */
     fun stop() {
-        if (thread != null && thread!!.isAlive) {
+        if (isStarted()) {
             shouldBeStarted = false
             if (this.listener.isSubscribed)
                 this.listener.unsubscribe()
@@ -80,28 +109,53 @@ class JedisListener(private val pool: JedisPool) {
     }
 }
 
-
-abstract class ChannelListener<T> {
+/**
+ * An abstract listener for managing Redis callbacks.
+ * @param listeners list of message classes to subscribe to. These must all have the [RedisChannel] annotation.
+ */
+abstract class ChannelListener(vararg listeners: KClass<*>) {
+    val channels: List<String>
     private val gson = Gson()
-    private val type = (javaClass.genericSuperclass as ParameterizedType).actualTypeArguments[0]
-    val channel: String
+    private val listenerClasses = mutableMapOf<String, Class<*>>()
+    private val handlers = mutableMapOf<String, (Any) -> Unit>()
 
     init {
-        val annotation = (type as Class<*>).getAnnotation(RedisChannel::class.java)
-        if (annotation != null) {
-            channel = annotation.channel
-        } else {
-            throw IllegalStateException("${type.name} isn't annotated with RedisChannel")
+        val listenerChannels = mutableListOf<String>()
+        for (listener in listeners) {
+            val annotation = listener.java.getAnnotation(RedisChannel::class.java)
+            if (annotation != null) {
+                listenerClasses[annotation.channel] = listener.java
+                listenerChannels.add(annotation.channel)
+            } else {
+                throw IllegalStateException("${listener.java.name} isn't annotated with RedisChannel")
+            }
         }
-    }
 
-    fun onMessage(message: String) {
-        onMessage(gson.fromJson<T>(message, type))
+        channels = listenerChannels
     }
 
     /**
-     * Message received on channel. It will attempt to parse message as the generic type parameter.
+     * Dispatch a message to the listener and properly route it to the handler.
      */
-    abstract fun onMessage(message: T)
+    internal fun onMessage(channel: String, message: String) {
+        listenerClasses[channel]?.let { clazz ->
+            handlers[channel]?.invoke(gson.fromJson(message, clazz as Type))
+        }
+    }
+
+    /**
+     * Registers a callback to handle messages received from a type (annotated with [RedisChannel].
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> handle(type: Class<T>, handler: (T) -> Unit) {
+        listenerClasses.values.find { it == type }?.getAnnotation(RedisChannel::class.java)?.channel?.let {
+            handlers[it] = handler as (Any) -> Unit
+        } ?: throw IllegalArgumentException("${type.name} is not in the listeners list.")
+    }
+
+    /**
+     * Registers a callback to handle messages received from a type (annotated with [RedisChannel].
+     */
+    inline fun <reified T> handle(noinline handler: (T) -> Unit) = handle(T::class.java, handler)
 }
 

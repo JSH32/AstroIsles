@@ -5,7 +5,6 @@ import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 import org.spongepowered.configurate.loader.ConfigurationLoader
 import org.spongepowered.configurate.serialize.TypeSerializerCollection
 import java.io.File
-import java.io.Serializable
 
 /**
  * Annotate all loaded config classes with this.

@@ -1,8 +1,8 @@
 package com.github.jsh32.astroisles.core.modules.player
 
 import PlayerServiceGrpcKt
-import com.github.jsh32.astroisles.common.redis.JedisListener
 import com.github.jsh32.astroisles.common.module.Module
+import com.github.jsh32.astroisles.common.redis.JedisListener
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import io.grpc.ManagedChannel

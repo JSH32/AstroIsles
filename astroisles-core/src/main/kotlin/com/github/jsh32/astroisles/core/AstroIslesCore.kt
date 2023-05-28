@@ -1,6 +1,7 @@
 package com.github.jsh32.astroisles.core
 
-import com.github.jsh32.astroisles.common.*
+import com.github.jsh32.astroisles.common.CommandManager
+import com.github.jsh32.astroisles.common.loadConfig
 import com.github.jsh32.astroisles.common.module.ModuleLoader
 import com.github.jsh32.astroisles.common.module.spigotLoader
 import com.github.jsh32.astroisles.common.redis.JedisListener
