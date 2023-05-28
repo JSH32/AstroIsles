@@ -11,7 +11,6 @@ dependencies {
             requireCapability("com.github.jsh32.astroisles.common:spigot")
         }
     }
-    implementation(project(":astroisles-common"))
 }
 
 bukkit {

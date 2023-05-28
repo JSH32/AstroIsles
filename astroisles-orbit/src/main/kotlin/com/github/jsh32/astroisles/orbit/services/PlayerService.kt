@@ -2,10 +2,11 @@ package com.github.jsh32.astroisles.orbit.services
 
 import PlayerServiceGrpcKt
 import PlayerServiceOuterClass
-import com.github.jsh32.astroisles.common.RedisTables
+import com.github.jsh32.astroisles.common.redis.*
 import com.github.jsh32.astroisles.orbit.fromSql
 import com.github.jsh32.astroisles.orbit.models.Player
 import com.github.jsh32.astroisles.orbit.models.query.QPlayer
+import com.google.gson.Gson
 import com.google.protobuf.Empty
 import com.google.protobuf.TimestampKt
 import com.google.protobuf.empty
@@ -52,14 +53,14 @@ class PlayerService(private val redis: JedisPool) : PlayerServiceGrpcKt.PlayerSe
             uuid = foundPlayer.playerId.toString()
             name = foundPlayer.playerName
 
-            val server = redis.resource.use { conn ->
-                conn.select(RedisTables.USER_LOCATIONS)
-                conn.get(foundPlayer.playerId.toString())
+            val details = redis.resource.use { conn ->
+                conn.select(RedisDatabases.PLAYER_SERVER)
+                conn.getObject<RedisObjects.PlayerServerData>(uuid)
             }
 
-            online = server != null
+            online = details?.serverId != null
             if (online) {
-                serverId = server
+                serverId = details?.serverId!!
             }
 
             firstJoin = TimestampKt.fromSql(foundPlayer.firstJoin)
@@ -70,9 +71,29 @@ class PlayerService(private val redis: JedisPool) : PlayerServiceGrpcKt.PlayerSe
     }
 
     override suspend fun playerJoin(request: PlayerServiceOuterClass.PlayerJoinRequest): Empty {
+        val joiningPlayer = QPlayer()
+            .playerId.eq(UUID.fromString(request.uuid))
+            .findOne()
+
         redis.resource.use { conn ->
-            conn.select(RedisTables.USER_LOCATIONS)
-            conn.set(request.uuid.toString(), request.serverId)
+            conn.select(RedisDatabases.PLAYER_SERVER)
+            conn.set(request.uuid, Gson().toJson(RedisObjects.PlayerServerData(request.serverId)))
+            conn.publishChannel(
+                RedisMessages.PlayerJoin(
+                request.uuid,
+                request.serverId,
+                joiningPlayer?.lastLogout == null,
+                conn.exists(request.uuid)
+            ))
+        }
+
+        // This marks the player as having experienced the first join.
+        if (joiningPlayer?.lastLogout == null) {
+            QPlayer()
+                .playerId.eq(UUID.fromString(request.uuid))
+                .asUpdate()
+                .set("last_logout", Timestamp.from(Instant.now()))
+                .update()
         }
 
         return empty {}
@@ -80,7 +101,7 @@ class PlayerService(private val redis: JedisPool) : PlayerServiceGrpcKt.PlayerSe
 
     override suspend fun playerQuit(request: PlayerServiceOuterClass.PlayerQuitRequest): Empty {
         redis.resource.use { conn ->
-            conn.select(RedisTables.USER_LOCATIONS)
+            conn.select(RedisDatabases.PLAYER_SERVER)
             conn.del(request.uuid)
         }
 

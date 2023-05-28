@@ -1,5 +1,6 @@
 package com.github.jsh32.astroisles.orbit
 
+import com.github.jsh32.astroisles.common.StandardConfigs
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
 
@@ -12,13 +13,7 @@ class Config {
     val database: OrbitDatabaseConfig = OrbitDatabaseConfig()
 
     @Comment("Redis connection details")
-    val redis: RedisConfig = RedisConfig()
-}
-
-@ConfigSerializable
-class RedisConfig {
-    val host: String = "localhost"
-    val port: Int = 6379
+    val redis: StandardConfigs.RedisConfig = StandardConfigs.RedisConfig()
 }
 
 @ConfigSerializable

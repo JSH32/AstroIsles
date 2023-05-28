@@ -22,7 +22,7 @@ class ModuleLoader(vararg guiceModules: com.google.inject.Module) {
      */
     fun getRegisteredModuleNames() = registry.values.map { it.name }
 
-    fun initialize(vararg modules: KClass<out Module>) {
+    suspend fun initialize(vararg modules: KClass<out Module>) {
         val createdConfigs = mutableListOf<File>()
         val created = mutableListOf<Module>()
 
@@ -44,7 +44,7 @@ class ModuleLoader(vararg guiceModules: com.google.inject.Module) {
         }
     }
 
-    fun deInitialize() {
+    suspend fun deInitialize() {
         for (module in registry.values) {
             module.disable()
         }

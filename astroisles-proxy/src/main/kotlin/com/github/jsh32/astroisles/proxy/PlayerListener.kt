@@ -3,28 +3,26 @@ package com.github.jsh32.astroisles.proxy
 import PlayerServiceGrpcKt
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
-import com.velocitypowered.api.event.connection.PostLoginEvent
 import com.velocitypowered.api.event.player.ServerConnectedEvent
 import com.velocitypowered.api.event.player.ServerPreConnectEvent
-import com.velocitypowered.api.proxy.ProxyServer
 import createPlayerRequest
 import getPlayerRequest
 import io.grpc.ManagedChannel
 import io.grpc.Status
 import io.grpc.StatusException
-import net.kyori.adventure.text.Component
 import playerJoinRequest
 import playerQuitRequest
+import java.util.UUID
 
 
 class PlayerListener(orbitClient: ManagedChannel) {
     private val playerService = PlayerServiceGrpcKt.PlayerServiceCoroutineStub(orbitClient)
+    private val newPlayers = mutableListOf<UUID>()
 
     @Subscribe
     suspend fun ServerPreConnectEvent.onPlayerLogin() {
         try {
             playerService.getPlayerData(getPlayerRequest { uuid = player.uniqueId.toString() })
-            player.sendMessage(Component.text("Welcome back to server"))
         } catch (e: StatusException) {
             if (e.status.code == Status.NOT_FOUND.code) {
                 playerService.createPlayer(createPlayerRequest {
@@ -32,7 +30,8 @@ class PlayerListener(orbitClient: ManagedChannel) {
                     name = player.username
                 })
 
-                player.sendMessage(Component.text("Welcome to server"))
+                // This gets removed when the player completely joins.
+                newPlayers.add(player.uniqueId)
             } else { throw e }
         }
     }

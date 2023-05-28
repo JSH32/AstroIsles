@@ -3,7 +3,9 @@ package com.github.jsh32.astroisles.common
 import org.spongepowered.configurate.CommentedConfigurationNode
 import org.spongepowered.configurate.hocon.HoconConfigurationLoader
 import org.spongepowered.configurate.loader.ConfigurationLoader
+import org.spongepowered.configurate.serialize.TypeSerializerCollection
 import java.io.File
+import java.io.Serializable
 
 /**
  * Annotate all loaded config classes with this.
@@ -18,10 +20,18 @@ data class ConfigLoadResult<T>(val config: T, val created: Boolean)
 /**
  * Load/create a config from a file.
  */
-fun <T> loadConfig(config: Class<T>, file: File, required: Boolean = false): ConfigLoadResult<T> {
+fun <T> loadConfig(config: Class<T>, file: File, required: Boolean = false, serializerConfig: ((TypeSerializerCollection.Builder) -> Unit)? = null): ConfigLoadResult<T> {
     val loader: ConfigurationLoader<CommentedConfigurationNode> =
         HoconConfigurationLoader.builder()
-            .defaultOptions { opts -> opts.shouldCopyDefaults(true) }
+            .defaultOptions { opts ->
+                opts.shouldCopyDefaults(true)
+
+                if (serializerConfig != null) {
+                    opts.serializers(serializerConfig)
+                } else {
+                    opts
+                }
+            }
             .prettyPrinting(true)
             .path(file.toPath())
             .build()

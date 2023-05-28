@@ -1,6 +1,7 @@
 package com.github.jsh32.astroisles.common.module
 
 import com.github.jsh32.astroisles.common.Config
+import com.github.jsh32.astroisles.common.minecraftSerializers
 import com.google.inject.Inject
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
@@ -16,7 +17,7 @@ abstract class Module(val name: String, private val configClasses: List<KClass<*
 
     private val configs = mutableMapOf<Class<*>, Any>()
 
-    fun onDisable() {
+    suspend fun onDisable() {
         HandlerList.unregisterAll(this)
         disable()
     }
@@ -32,7 +33,7 @@ abstract class Module(val name: String, private val configClasses: List<KClass<*
             val annotation = config.java.getAnnotation(Config::class.java)!!
             val file = Paths.get(plugin.dataFolder.path, annotation.file).toFile()
 
-            val loaded = com.github.jsh32.astroisles.common.loadConfig(config.java, file)
+            val loaded = com.github.jsh32.astroisles.common.loadConfig(config.java, file, false, minecraftSerializers)
             if (loaded.created) {
                 created.add(file)
             } else {
@@ -54,7 +55,7 @@ abstract class Module(val name: String, private val configClasses: List<KClass<*
      */
     inline fun <reified T> loadConfig(): T? = this.loadConfig(T::class.java)
 
-    open fun enable() {}
+    open suspend fun enable() {}
 
-    open fun disable() {}
+    open suspend fun disable() {}
 }

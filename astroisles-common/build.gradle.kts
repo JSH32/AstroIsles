@@ -31,11 +31,14 @@ dependencies {
     // Redis
     api("redis.clients:jedis:4.3.0")
 
+    api("com.google.code.gson:gson:2.10.1")
+    api("com.google.inject:guice:7.0.0")
+
     val spigotApi by configurations
     val spigotAnnotationProcessor by configurations
     val spigotCompileOnly by configurations
 
-    spigotApi("com.google.inject:guice:7.0.0")
+    spigotApi(project(":astroisles-common"))
 
     // Adventure
     spigotApi("net.kyori:adventure-api:4.13.1")

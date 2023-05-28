@@ -16,10 +16,6 @@ class FriendModule @Inject constructor(
 ) : Module("FriendModule") {
     private val friendService = FriendServiceGrpcKt.FriendServiceCoroutineStub(orbitClient)
 
-    override fun enable() {
-//        println(loadConfig<TestConfig>()!!.player)
-    }
-
     @CommandDescription("Test cloud command using @CommandMethod")
     @CommandMethod("friend")
     suspend fun friendCommand(sender: CommandSender) {

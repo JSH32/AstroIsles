@@ -31,11 +31,6 @@ class AstroIslesProxy @Inject constructor(
     private val config = loadConfig<ProxyConfig>(Paths.get(dataDirectory.toString(), "orbit.conf").toFile()).config
     private val orbitConnection = ManagedChannelBuilder.forAddress(config.orbit.host, config.orbit.port).usePlaintext().build()
 
-//    init {
-//        suspendingPluginContainer.initialize(this)
-//        suspendingPluginContainer.initialize(this)
-//    }
-
     @Subscribe
     fun onProxyInitialization(event: ProxyInitializeEvent) {
         suspendingPluginContainer.initialize(this)

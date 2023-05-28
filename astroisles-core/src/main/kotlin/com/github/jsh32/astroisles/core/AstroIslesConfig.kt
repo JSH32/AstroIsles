@@ -1,16 +1,13 @@
 package com.github.jsh32.astroisles.core
 
+import com.github.jsh32.astroisles.common.StandardConfigs
 import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
 
 @ConfigSerializable
 class AstroIslesConfig(
     @Comment("Orbit config settings")
-    val orbit: OrbitConfig = OrbitConfig()
+    val orbit: StandardConfigs.OrbitConfig = StandardConfigs.OrbitConfig(),
+    @Comment("Redis settings")
+    val redis: StandardConfigs.RedisConfig = StandardConfigs.RedisConfig()
 )
-
-@ConfigSerializable
-class OrbitConfig {
-    val host = "0.0.0.0"
-    val port = 3000
-}
