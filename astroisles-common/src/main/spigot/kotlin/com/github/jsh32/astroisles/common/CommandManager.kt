@@ -23,7 +23,7 @@ import kotlin.jvm.optionals.getOrDefault
 /**
  * Command manager based around the Cloud Command Framework.
  */
-class CommandManager(plugin: JavaPlugin, private val audiences: BukkitAudiences, name: String, private val prefix: String) {
+class CommandManager(plugin: JavaPlugin, private val audience: BukkitAudiences, name: String, private val prefix: String) {
     private val manager: BukkitCommandManager<CommandSender> = run {
         val executionCoordinatorFunction = AsynchronousCommandExecutionCoordinator.builder<CommandSender>().build()
         val mapperFunction: java.util.function.Function<CommandSender, CommandSender> = java.util.function.Function.identity()
@@ -54,7 +54,7 @@ class CommandManager(plugin: JavaPlugin, private val audiences: BukkitAudiences,
     }
 
     private var minecraftHelp = MinecraftHelp(
-        "/$prefix help", { sender: CommandSender? -> audiences.sender(sender!!) },
+        "/$prefix help", { sender: CommandSender? -> audience.sender(sender!!) },
         manager
     )
 
@@ -92,9 +92,7 @@ class CommandManager(plugin: JavaPlugin, private val audiences: BukkitAudiences,
                     .append(Component.text("] ", NamedTextColor.DARK_GRAY))
                     .append(component!!).build()
             }.apply(manager) { sender: CommandSender? ->
-                audiences.sender(
-                    sender!!
-                )
+                audience.sender(sender!!)
             }
 
         defaultCommands()

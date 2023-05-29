@@ -29,4 +29,10 @@ class PlayerConfig {
 
         Happy adventuring!</gray>
     """.trimIndent()
+
+    @Comment("Message sent to players when a player leaves. Variables available: [player]")
+    val onLeave = "<gray>[<red>-</red>]</gray> <player>"
+
+    @Comment("Message sent to players when a player joins. Variables available: [player]")
+    val onJoin = "<gray>[<green>+</green>]</gray> <player>"
 }

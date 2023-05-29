@@ -13,6 +13,9 @@ object RedisDatabases {
 object RedisMessages {
     @RedisChannel("player_join")
     class PlayerJoin(val playerId: String, val serverId: String, val firstJoin: Boolean, val initialJoin: Boolean)
+
+    @RedisChannel("player_quit")
+    class PlayerQuit(val playerId: String)
 }
 
 /**

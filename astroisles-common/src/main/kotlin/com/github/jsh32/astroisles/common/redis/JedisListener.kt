@@ -68,10 +68,18 @@ class JedisListener(private val pool: JedisPool) {
         }
     }
 
+    fun removeListener(listener: ChannelListener) {
+        val removed = listeners.removeIf { listener === it }
+        if (removed) {
+            stop()
+            start()
+        }
+    }
+
     /**
      * Check if the thread/subscriber is started and alive.
      */
-    private fun isStarted() = thread != null && thread!!.isAlive
+    fun isStarted() = listener.isSubscribed
 
     /**
      * Starts the subscriber thread that manages the subscriptions for the listeners.
@@ -81,7 +89,7 @@ class JedisListener(private val pool: JedisPool) {
      * @throws IllegalStateException if the pubsub listener is already started.
      */
     fun start() {
-        if (!isStarted() || shouldBeStarted) {
+        if (!isStarted() || !shouldBeStarted) {
             shouldBeStarted = true
             if (listeners.isNotEmpty()) {
                 val channels = listeners.flatMap { it.channels }.toSet().toList()

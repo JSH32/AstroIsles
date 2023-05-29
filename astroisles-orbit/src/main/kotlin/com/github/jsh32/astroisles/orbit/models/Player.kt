@@ -14,6 +14,8 @@ class Player(
     val playerId: UUID,
     @DbComment("Player username.")
     val playerName: String,
+    @DbComment("Player display name.")
+    val displayName: String,
     @DbComment("Time the player first joined.")
     val firstJoin: Timestamp,
     @DbComment("Last time the user logged out.")

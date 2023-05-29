@@ -20,28 +20,35 @@ import java.nio.file.Paths
 /**
  * GRPC orbit connection stuff.
  */
-private class CoreModule(private val orbit: ManagedChannel, private val redis: JedisPool, private val listener: JedisListener) : AbstractModule() {
+private class CoreModule(
+    private val orbit: ManagedChannel,
+    private val redis: JedisPool,
+    private val listener: JedisListener,
+    private val audience: BukkitAudiences
+) : AbstractModule() {
     override fun configure() {
         this.bind(ManagedChannel::class.java).toInstance(orbit)
         this.bind(JedisPool::class.java).toInstance(redis)
         this.bind(JedisListener::class.java).toInstance(listener)
+        this.bind(BukkitAudiences::class.java).toInstance(audience)
     }
 }
 
 class AstroIslesCore : SuspendingJavaPlugin() {
+    lateinit var audience: BukkitAudiences
+
     private lateinit var config: AstroIslesConfig
 
     private lateinit var modules: ModuleLoader
     private lateinit var commandManager: CommandManager
-    private lateinit var audiences: BukkitAudiences
 
     private lateinit var jedisPool: JedisPool
     private lateinit var orbitChannel: ManagedChannel
     private lateinit var jedisListener: JedisListener
 
     override suspend fun onEnableAsync() {
-        this.audiences = BukkitAudiences.create(this)
-        this.commandManager = CommandManager(this, audiences, "AstroIsles", "core")
+        this.audience = BukkitAudiences.create(this)
+        this.commandManager = CommandManager(this, audience, "AstroIsles", "core")
 
         this.config = loadConfig<AstroIslesConfig>(
             Paths.get(dataFolder.path, "core.conf").toFile()
@@ -52,7 +59,7 @@ class AstroIslesCore : SuspendingJavaPlugin() {
         this.jedisListener = JedisListener(jedisPool)
         this.jedisListener.start()
 
-        modules = spigotLoader(this, CoreModule(orbitChannel, jedisPool, jedisListener))
+        modules = spigotLoader(this, CoreModule(orbitChannel, jedisPool, jedisListener, audience))
 
         modules.setPostInit {
             server.pluginManager.registerSuspendingEvents(it, this)
@@ -69,8 +76,8 @@ class AstroIslesCore : SuspendingJavaPlugin() {
 
     override suspend fun onDisableAsync() {
         modules.deInitialize()
-        orbitChannel.shutdownNow()
-        jedisListener.stop()
+        orbitChannel.shutdown()
+        if (jedisListener.isStarted()) jedisListener.stop()
         jedisPool.close()
     }
 }

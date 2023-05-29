@@ -6,14 +6,16 @@ message Player {
   required string uuid = 1;
   // Player name.
   required string name = 2;
+  // Player display name
+  required string display_name = 3;
   // Is the player currently online.
-  required bool online = 3;
+  required bool online = 4;
   // First join date of player.
-  required google.protobuf.Timestamp first_join = 4;
+  required google.protobuf.Timestamp first_join = 5;
   // Last logout date.
-  optional google.protobuf.Timestamp last_logout = 5;
+  optional google.protobuf.Timestamp last_logout = 6;
   // Current server location.
-  optional string server_id = 6;
+  optional string server_id = 7;
 }
 
 message CreatePlayerRequest {

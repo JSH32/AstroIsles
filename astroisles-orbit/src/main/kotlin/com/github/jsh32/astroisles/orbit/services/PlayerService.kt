@@ -28,12 +28,13 @@ class PlayerService(private val redis: JedisPool) : PlayerServiceGrpcKt.PlayerSe
                 .withDescription("User with ID ${found.playerId} already exists."))
         }
 
-        val player = Player(playerUuid, request.name, Timestamp.from(Instant.now()))
+        val player = Player(playerUuid, request.name, request.name, Timestamp.from(Instant.now()))
         player.save()
 
         return player {
             uuid = playerUuid.toString()
             name = player.playerName
+            displayName = player.displayName
             online = true
             firstJoin = TimestampKt.fromSql(player.firstJoin)
         }
@@ -52,6 +53,7 @@ class PlayerService(private val redis: JedisPool) : PlayerServiceGrpcKt.PlayerSe
         return player {
             uuid = foundPlayer.playerId.toString()
             name = foundPlayer.playerName
+            displayName = foundPlayer.displayName
 
             val details = redis.resource.use { conn ->
                 conn.select(RedisDatabases.PLAYER_SERVER)
@@ -103,6 +105,7 @@ class PlayerService(private val redis: JedisPool) : PlayerServiceGrpcKt.PlayerSe
         redis.resource.use { conn ->
             conn.select(RedisDatabases.PLAYER_SERVER)
             conn.del(request.uuid)
+            conn.publishChannel(RedisMessages.PlayerQuit(request.uuid))
         }
 
         QPlayer()
