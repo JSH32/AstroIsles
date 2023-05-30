@@ -5,9 +5,13 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable
 import org.spongepowered.configurate.objectmapping.meta.Comment
 
 @ConfigSerializable
-class AstroIslesConfig(
+class AstroIslesConfig {
     @Comment("Orbit config settings")
-    val orbit: StandardConfigs.OrbitConfig = StandardConfigs.OrbitConfig(),
+    val orbit: StandardConfigs.OrbitConfig = StandardConfigs.OrbitConfig()
+
     @Comment("Redis settings")
     val redis: StandardConfigs.RedisConfig = StandardConfigs.RedisConfig()
-)
+
+    @Comment("Server ID")
+    val serverId: String = ""
+}

@@ -46,7 +46,7 @@ class ModuleLoader(vararg guiceModules: com.google.inject.Module) {
 
     suspend fun deInitialize() {
         for (module in registry.values) {
-            module.disable()
+            module.onDisable()
         }
 
         registry.clear()

@@ -16,6 +16,9 @@ object RedisMessages {
 
     @RedisChannel("player_quit")
     class PlayerQuit(val playerId: String)
+
+    @RedisChannel("player_chat")
+    class PlayerChat(val playerId: String, val message: String)
 }
 
 /**

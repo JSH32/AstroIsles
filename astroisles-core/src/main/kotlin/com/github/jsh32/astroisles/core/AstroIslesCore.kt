@@ -6,10 +6,12 @@ import com.github.jsh32.astroisles.common.module.ModuleLoader
 import com.github.jsh32.astroisles.common.module.spigotLoader
 import com.github.jsh32.astroisles.common.redis.JedisListener
 import com.github.jsh32.astroisles.core.modules.FriendModule
+import com.github.jsh32.astroisles.core.modules.chat.ChatListener
+import com.github.jsh32.astroisles.core.modules.chat.ChatModule
 import com.github.jsh32.astroisles.core.modules.player.PlayerModule
 import com.github.shynixn.mccoroutine.bukkit.SuspendingJavaPlugin
-import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import com.google.inject.AbstractModule
+import com.google.inject.name.Names
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import net.kyori.adventure.platform.bukkit.BukkitAudiences
@@ -24,13 +26,15 @@ private class CoreModule(
     private val orbit: ManagedChannel,
     private val redis: JedisPool,
     private val listener: JedisListener,
-    private val audience: BukkitAudiences
+    private val audience: BukkitAudiences,
+    private val serverId: String
 ) : AbstractModule() {
     override fun configure() {
         this.bind(ManagedChannel::class.java).toInstance(orbit)
         this.bind(JedisPool::class.java).toInstance(redis)
         this.bind(JedisListener::class.java).toInstance(listener)
         this.bind(BukkitAudiences::class.java).toInstance(audience)
+        this.bind(String::class.java).annotatedWith(Names.named("server_id")).toInstance(serverId)
     }
 }
 
@@ -51,7 +55,8 @@ class AstroIslesCore : SuspendingJavaPlugin() {
         this.commandManager = CommandManager(this, audience, "AstroIsles", "core")
 
         this.config = loadConfig<AstroIslesConfig>(
-            Paths.get(dataFolder.path, "core.conf").toFile()
+            Paths.get(dataFolder.path, "core.conf").toFile(),
+            true
         ).config
 
         this.orbitChannel = ManagedChannelBuilder.forAddress(config.orbit.host, config.orbit.port).usePlaintext().build()
@@ -59,16 +64,21 @@ class AstroIslesCore : SuspendingJavaPlugin() {
         this.jedisListener = JedisListener(jedisPool)
         this.jedisListener.start()
 
-        modules = spigotLoader(this, CoreModule(orbitChannel, jedisPool, jedisListener, audience))
-
-        modules.setPostInit {
-            server.pluginManager.registerSuspendingEvents(it, this)
-            commandManager.registerCommands(it)
+        if (config.serverId.isEmpty()) {
+            server.pluginManager.disablePlugin(this)
+            throw IllegalStateException("server_id must be set")
         }
+
+        modules = spigotLoader(
+            this,
+            commandManager,
+            CoreModule(orbitChannel, jedisPool, jedisListener, audience, config.serverId)
+        )
 
         modules.initialize(
             FriendModule::class,
-            PlayerModule::class
+            PlayerModule::class,
+            ChatModule::class
         )
 
         logger.info("Started with modules: [${modules.getRegisteredModuleNames().joinToString(", ")}]")
@@ -77,7 +87,7 @@ class AstroIslesCore : SuspendingJavaPlugin() {
     override suspend fun onDisableAsync() {
         modules.deInitialize()
         orbitChannel.shutdown()
-        if (jedisListener.isStarted()) jedisListener.stop()
+        if (jedisListener.subscribed) jedisListener.stop()
         jedisPool.close()
     }
 }

@@ -8,6 +8,7 @@ dependencies {
     implementation("io.grpc:grpc-protobuf:1.55.1")
     implementation("com.google.protobuf:protobuf-kotlin:3.22.2")
     implementation("io.grpc:grpc-netty:1.55.1")
+    implementation("io.grpc:grpc-core:1.55.1")
 }
 
 protobuf {

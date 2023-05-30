@@ -3,6 +3,7 @@ package com.github.jsh32.astroisles.orbit
 import com.github.jsh32.astroisles.common.loadConfig
 import com.github.jsh32.astroisles.orbit.models.Friends
 import com.github.jsh32.astroisles.orbit.models.Player
+import com.github.jsh32.astroisles.orbit.services.ChatService
 import com.github.jsh32.astroisles.orbit.services.FriendService
 import com.github.jsh32.astroisles.orbit.services.PlayerService
 import io.ebean.Database
@@ -30,6 +31,7 @@ fun main() {
         .intercept(LoggingInterceptor())
         .addService(FriendService())
         .addService(PlayerService(jedisPool))
+        .addService(ChatService(jedisPool))
         .build()
 
     server.start()

@@ -40,13 +40,13 @@ fun <T> loadConfig(config: Class<T>, file: File, required: Boolean = false, seri
     val loaded = node.get(config)!!
 
     if (!file.exists()) {
-        if (required) {
-            throw IllegalStateException("Config (${file.toPath()}) was created and needs to be filled out.")
-        }
-
         // Set node to default value of config class and save it.
         node.set(config, loaded)
         loader.save(node)
+
+        if (required) {
+            throw IllegalStateException("Config (${file.toPath()}) was created and needs to be filled out.")
+        }
     }
 
     return ConfigLoadResult(loaded, !file.exists())

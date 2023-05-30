@@ -1,0 +1,13 @@
+import "google/protobuf/empty.proto";
+
+service ChatService {
+  rpc SendChat (ChatRequest) returns (google.protobuf.Empty) {}
+
+}
+
+message ChatRequest {
+  // Player UUID who sent the message.
+  required string player_id = 1;
+  // Message sent by player.
+  required string message = 2;
+}

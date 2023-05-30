@@ -18,6 +18,9 @@ class JedisListener(private val pool: JedisPool) {
     // This exists because a subscription cannot exist with no channels, so we should turn on the thread when first subscribed.
     private var shouldBeStarted = false
 
+    var subscribed = false
+        private set
+
     /**
      * A thread that handles subscribing to Redis channels with a [MessageListener].
      */
@@ -59,12 +62,11 @@ class JedisListener(private val pool: JedisPool) {
             listeners.add(listener)
             if (!channelsNotAdded) {
                 // A new channel has been added. We need to restart the listener.
-                if (this.listener.isSubscribed)
-                    this.listener.unsubscribe()
+                unsubscribe()
             }
 
             // Start if not started already.
-            if (shouldBeStarted && !isStarted()) start()
+            if (shouldBeStarted && !subscribed) start()
         }
     }
 
@@ -76,10 +78,11 @@ class JedisListener(private val pool: JedisPool) {
         }
     }
 
-    /**
-     * Check if the thread/subscriber is started and alive.
-     */
-    fun isStarted() = listener.isSubscribed
+    private fun unsubscribe() {
+        subscribed = false
+        if (this.listener.isSubscribed)
+            this.listener.unsubscribe()
+    }
 
     /**
      * Starts the subscriber thread that manages the subscriptions for the listeners.
@@ -89,8 +92,9 @@ class JedisListener(private val pool: JedisPool) {
      * @throws IllegalStateException if the pubsub listener is already started.
      */
     fun start() {
-        if (!isStarted() || !shouldBeStarted) {
+        if (!subscribed || !shouldBeStarted) {
             shouldBeStarted = true
+            subscribed = true
             if (listeners.isNotEmpty()) {
                 val channels = listeners.flatMap { it.channels }.toSet().toList()
                 thread = JedisThread(pool, listener, channels)
@@ -107,10 +111,9 @@ class JedisListener(private val pool: JedisPool) {
      * @throws IllegalStateException if the pubsub listener is already stopped.
      */
     fun stop() {
-        if (isStarted()) {
+        if (subscribed) {
             shouldBeStarted = false
-            if (this.listener.isSubscribed)
-                this.listener.unsubscribe()
+            unsubscribe()
         } else {
             throw IllegalStateException("PubSub listener is already stopped.")
         }

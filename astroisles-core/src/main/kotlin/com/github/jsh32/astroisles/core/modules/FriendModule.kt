@@ -3,7 +3,7 @@ package com.github.jsh32.astroisles.core.modules
 import FriendServiceGrpcKt
 import cloud.commandframework.annotations.CommandDescription
 import cloud.commandframework.annotations.CommandMethod
-import com.github.jsh32.astroisles.common.module.Module
+import com.github.jsh32.astroisles.common.module.MinecraftModule
 import com.google.inject.Inject
 import com.google.inject.Singleton
 import friendRequest
@@ -13,7 +13,7 @@ import org.bukkit.command.CommandSender
 @Singleton
 class FriendModule @Inject constructor(
     orbitClient: ManagedChannel
-) : Module("FriendModule") {
+) : MinecraftModule("FriendModule") {
     private val friendService = FriendServiceGrpcKt.FriendServiceCoroutineStub(orbitClient)
 
     @CommandDescription("Test cloud command using @CommandMethod")

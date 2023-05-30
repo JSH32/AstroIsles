@@ -44,6 +44,9 @@ dependencies {
     spigotApi("net.kyori:adventure-api:4.13.1")
     spigotApi("net.kyori:adventure-platform-bukkit:4.3.0")
 
+    spigotApi("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:2.12.0")
+    spigotApi("com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:2.12.0")
+
     // Cloud command framework
     spigotApi("cloud.commandframework:cloud-paper:1.8.3")
     spigotApi("cloud.commandframework:cloud-minecraft-extras:1.8.3")
